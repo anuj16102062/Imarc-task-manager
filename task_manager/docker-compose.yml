@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: db_name
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - task_manager_network
+
+  web:
+    build: .
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://user_name:password@db:5432/db_name
+    command: bash -c "while ! pg_isready -h db -p 5432; do sleep 1; done; uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    networks:
+      - task_manager_network
+
+volumes:
+  pgdata:
+
+networks:
+  task_manager_network:
+    driver: bridge
